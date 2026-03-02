@@ -2,6 +2,30 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+/**
+    Tells us if a command like .exit was successful or if we didn't recognize it.
+*/
+typedef enum{
+    META_COMMAND_SUCCESS,
+    META_COMMAND_UNRECOGNIZED_COMMAND
+}MetaCommandResult;
+/**
+    This if for our SQL compiler. It tells us if the SQL statement was understood or if there's a syntax error.
+*/
+typedef enum{
+    PREPARE_SUCCESS,
+    PREPARE_UNRECOGNIZED_STATEMENT
+}PrepareResult;
+/**
+    Statement: A simple strucutre that acts as our "Internal Opcode." Right now, it just stores the type (either INSERT or SELECT), but later it will hold the data being inserted.
+*/
+typedef enum{
+    STATEMENT_INSERT,
+    STATEMENT_SELECT,
+}StatementType;
+typedef struct{
+    StatementType type;
+}Statement;
 struct inputbuffer{
     char* buffer;
     size_t buffer_length;

@@ -39,7 +39,9 @@ We are moving from a simple "Exit Only" REPL to a system that can understand and
 Proposed Changes
 [Component] SQL Front-end & VM
 [MODIFY] 
+
 db.c
+
 Define MetaCommandResult enum to handle meta-commands like .exit.
 Define PrepareResult enum to handle SQL parsing results.
 Define StatementType enum (INSERT, SELECT) and a Statement struct.
