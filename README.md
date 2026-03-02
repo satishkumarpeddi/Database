@@ -1,61 +1,57 @@
-Building Our Database
+C Database Engine Documentation
+This document explains the architecture and components of the database engine we are building.
 
-We'll maintain two ways of looking at this: a simple "Friendly Data Box" view for intuition, and a "Technical Engine" view for deep knowledge.
+🏗️ Architecture Overview
 
-🧸 Simple View (Friendly Data Box)
-The Listener (REPL): The ear that hears your commands.
-The Translator (Compiler & VM): Turns your words into robot-talk.
-The Notebook (Pager): Writes things down on the disk so it's permanent.
-The Organizer (B-Tree): Keeps the notebook tidy so we can find things fast.
-⚙️ Technical View (The Engine)
+The database follows a classic tiered architecture:
 
-1. REPL (Read-Execute-Print Loop)
-The main interface. We use getline() to read input from stdin. It parses "meta-commands" (starting with .) and handles "SQL statements".
+Frontend (REPL): The entry point that reads user input.
+Middle Tier (Compiler): Translates raw text into internal "Opcodes" or Statements.
+Backend (Virtual Machine): Executes the statements against the storage layer.
 
-2. SQL Compiler & Virtual Machine
-Tokenizer/Parser: Checks if the SQL is valid (e.g., insert, select).
-VM: Executes internal opcodes. Instead of directly writing to disk, it tells the storage engine what to do.
-3. Pager & Disk Persistence
-Pager: Manages a cache of "pages" (usually 4KB). It reads from and writes to the database file.
-Persistence: Ensures that even if the program crashes, the data stays on the disk.
-4. B-Tree Storage
-The core data structure. SQLite uses B-Trees to store tables and indexes. It allows $O(\log n)$ search, insert, and delete.
+🧩 Component Breakdown
 
-Proposed Changes
-[Component] Core Database Shell
-[NEW] 
-db.c
-The main entry point. We'll start with the REPL and basic command handling.
+1. Input Handling (InputBuffer)
+Manages the state of the user's input. We use a heap-allocated buffer to store the current command string.
 
-Verification Plan
-Automated & Manual Tests
-Verify .exit works.
-Verify insert and select work in-memory first.
-Verify data persists after closing and reopening the database.
+new_input_buffer()
+: Allocates memory for the buffer and initializes its state.
+read_input()
+: Uses getline() (or a portable equivalent) to safely read arbitrary-length lines from stdin.
+2. The Compiler (
+prepare_statement
+)
+The "Brain" that understands SQL. It performs string analysis to determine the user's intent.
 
-Implementing the SQL Translator (Compiler & VM)
-We are moving from a simple "Exit Only" REPL to a system that can understand and execute SQL commands (like insert and select).
+Enums: PrepareResult tracks if the command was understood.
+Logic: It currently looks for keywords like insert and select.
+Output: Produces a Statement object which is the "machine code" of our database.
+3. The Virtual Machine (
+execute_statement
+)
+The "Engine" that carries out the physical work.
 
-Proposed Changes
-[Component] SQL Front-end & VM
-[MODIFY] 
+It uses a switch statement to dispatch the correct logic based on the StatementType.
+This separation allows us to change how we store data without changing how we parse it.
 
-db.c
+⚠️ Known Implementation Details (The "Segfault" Fixes)
 
-Define MetaCommandResult enum to handle meta-commands like .exit.
-Define PrepareResult enum to handle SQL parsing results.
-Define StatementType enum (INSERT, SELECT) and a Statement struct.
-Implement do_meta_command() to handle commands starting with ..
-Implement prepare_statement() (the "Compiler") to parse input into a Statement.
-Implement execute_statement() (the "Virtual Machine") to execute the Statement.
-Update the main loop to use these new components.
-Verification Plan
-Manual Verification
-Run the compiled 
-db.exe
-.
-Test .exit (should still work).
-Test .unrecognized (should show error).
-Test insert (should print "This is where we would do an insert.").
-Test select (should print "This is where we would do a select.").
-Test an unknown SQL command (should print "Unrecognized keyword at start of '...'.").
+1. Proper Malloc Size
+When allocating a struct behind a typedef pointer, we must allocate the size of the struct, not the size of the pointer.
+
+Incorrect: malloc(sizeof(InputBuffer)) (Allocates 4 or 8 bytes)
+Correct: malloc(sizeof(struct inputbuffer)) (Allocates the full struct)
+2. Pointer Initialization
+Before passing a Statement to 
+prepare_statement
+, memory must be allocated for it. Providing an uninitialized pointer causes the program to attempt to write to random memory, resulting in a Segmentation Fault.
+
+Solution: We either allocate memory on the heap for the statement or pass a pointer to a stack-allocated struct.
+🛠️ How to Compile & Run
+bash
+gcc db.c -o db.exe
+./db.exe
+Inside the prompt:
+
+Use .exit to close the database.
+Use insert or select to test the engine.
