@@ -25,7 +25,8 @@ typedef enum{
 }StatementType;
 typedef struct {
     StatementType type;
-}Statement; 
+}S  
+tatement; 
 struct inputbuffer{
     char* buffer;
     size_t buffer_length;
