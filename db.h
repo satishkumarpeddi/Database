@@ -42,4 +42,19 @@ typedef enum{
     PREPARE_UNRECOGNIZED_STATEMENT,
 }PrepareResult;
 
+/**
+    ExecuteResult
+    -------------
+    Returned by execute_statement() in vm.c.
+    The VM runs the prepared statement against the Table
+    codes:
+    EXECUTE_SUCCESS : Statement ran without issues.
+    EXECUTE_TABLE_FULL : An INSERT was attempted but no space is left.
+                         (Fixed-size in-memory table limit reached.)
+*/
+typedef enum{
+    EXECUTE_SUCCESS,
+    EXECUTE_TABLE_FULL,
+} ExecuteResult;
+
 #endif
